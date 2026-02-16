@@ -1,79 +1,69 @@
 import os
 import subprocess
 import sys
-import time
 
-# Configuración de rutas
+# Definir rutas relativas a este script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-COMPOSE_APP = os.path.join(BASE_DIR, "docker", "docker-compose.yml")
-COMPOSE_LLM = os.path.join(BASE_DIR, "docker", "llm", "docker-compose.yml")
+DOCKER_DIR = os.path.join(BASE_DIR, 'docker')
+LLM_DIR = os.path.join(DOCKER_DIR, 'llm')
 
-class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
+# Archivos docker-compose
+COMPOSE_APP = os.path.join(DOCKER_DIR, 'docker-compose.yml')
+COMPOSE_LLM = os.path.join(LLM_DIR, 'docker-compose.yml')
 
 def print_header(text):
-    print(f"\n{Colors.HEADER}{Colors.BOLD}=== {text} ==={Colors.ENDC}")
-
-def print_success(text):
-    print(f"{Colors.GREEN}{text}{Colors.ENDC}")
-
-def print_info(text):
-    print(f"{Colors.BLUE}{text}{Colors.ENDC}")
+    print(f"\n{'='*50}")
+    print(f" {text}")
+    print(f"{'='*50}")
 
 def run_command(command, cwd=None):
     try:
-        print_info(f"Ejecutando: {command}")
+        print(f"Ejecutando: {command}")
         subprocess.run(command, shell=True, check=True, cwd=cwd)
     except subprocess.CalledProcessError as e:
-        print(f"{Colors.FAIL}Error ejecutando comando: {e}{Colors.ENDC}")
+        print(f"Error ejecutando comando: {e}")
     except KeyboardInterrupt:
-        print(f"\n{Colors.WARNING}Operación cancelada por el usuario.{Colors.ENDC}")
+        print("\nOperación cancelada por el usuario.")
 
 def get_compose_cmd(file_path):
     return f"docker compose -f \"{file_path}\""
 
 def manage_stack(name, compose_file):
-    cmd_base = get_compose_cmd(compose_file)
-
+    cmd = get_compose_cmd(compose_file)
     while True:
-        print_header(f"Gestión de {name}")
+        print_header(f"Gestión {name}")
         print("1. Levantar (Up -d)")
-        print("2. Reconstruir y Levantar (Up -d --build)")
-        print("3. Detener (Stop)")
-        print("4. Bajar (Down)")
-        print("5. Ver Logs (Logs -f)")
-        print("6. Ver Estado (PS)")
+        print("2. Reconstruir (Up -d --build)")
+        print("3. Actualizar Imágenes (Pull)")
+        print("4. Reiniciar Contenedores (Restart)")
+        print("5. Eliminar/Bajar (Down)")
+        print("6. Ver Logs (Logs -f)")
+        print("7. Ver Estado (PS)")
         print("0. Volver al menú principal")
 
         choice = input(f"\nSeleccione una opción para {name}: ")
 
         if choice == '1':
-            run_command(f"{cmd_base} up -d")
+            run_command(f"{cmd} up -d")
         elif choice == '2':
-            run_command(f"{cmd_base} up -d --build")
+            run_command(f"{cmd} up -d --build")
         elif choice == '3':
-            run_command(f"{cmd_base} stop")
+            run_command(f"{cmd} pull")
         elif choice == '4':
-            run_command(f"{cmd_base} down")
+            run_command(f"{cmd} restart")
         elif choice == '5':
+            run_command(f"{cmd} down")
+        elif choice == '6':
             try:
-                run_command(f"{cmd_base} logs -f")
+                run_command(f"{cmd} logs -f")
             except KeyboardInterrupt:
                 pass
-        elif choice == '6':
-            run_command(f"{cmd_base} ps")
+        elif choice == '7':
+            run_command(f"{cmd} ps")
         elif choice == '0':
             break
         else:
-            print("Opción no válida.")
-
-        input("\nPresione Enter para continuar...")
+            print("Opción inválida.")
 
 def manage_all():
     cmd_app = get_compose_cmd(COMPOSE_APP)
@@ -81,72 +71,75 @@ def manage_all():
 
     while True:
         print_header("Gestión Global (Todo)")
-        print("1. Levantar Todo (Up -d)")
-        print("2. Reconstruir Todo (Up -d --build)")
-        print("3. Bajar Todo (Down)")
-        print("4. Ver Estado Global")
+        print("1. Levantar Todo (LLM + App)")
+        print("2. Reconstruir Todo (LLM + App)")
+        print("3. Actualizar Todo (Pull)")
+        print("4. Reiniciar Todo")
+        print("5. Bajar Todo (Down)")
+        print("6. Ver Estado Global")
         print("0. Volver al menú principal")
 
         choice = input("\nSeleccione una opción global: ")
 
         if choice == '1':
-            print_info("Levantando LLM...")
+            print("Levantando LLM...")
             run_command(f"{cmd_llm} up -d")
-            print_info("Levantando App...")
+            print("Levantando App...")
             run_command(f"{cmd_app} up -d")
         elif choice == '2':
-            print_info("Reconstruyendo LLM...")
+            print("Reconstruyendo LLM...")
             run_command(f"{cmd_llm} up -d --build")
-            print_info("Reconstruyendo App...")
+            print("Reconstruyendo App...")
             run_command(f"{cmd_app} up -d --build")
         elif choice == '3':
-            print_info("Bajando App...")
-            run_command(f"{cmd_app} down")
-            print_info("Bajando LLM...")
-            run_command(f"{cmd_llm} down")
+            print("Actualizando LLM...")
+            run_command(f"{cmd_llm} pull")
+            print("Actualizando App...")
+            run_command(f"{cmd_app} pull")
         elif choice == '4':
+            print("Reiniciando LLM...")
+            run_command(f"{cmd_llm} restart")
+            print("Reiniciando App...")
+            run_command(f"{cmd_app} restart")
+        elif choice == '5':
+            print("Bajando App...")
+            run_command(f"{cmd_app} down")
+            print("Bajando LLM...")
+            run_command(f"{cmd_llm} down")
+        elif choice == '6':
+            print("Estado LLM:")
             run_command(f"{cmd_llm} ps")
+            print("\nEstado App:")
             run_command(f"{cmd_app} ps")
         elif choice == '0':
             break
         else:
-            print("Opción no válida.")
+            print("Opción inválida.")
 
-        input("\nPresione Enter para continuar...")
-
-def main():
+def menu():
     while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print_header("COORDINADOR ANYTHING-LLM")
-        print(f"Directorio Base: {BASE_DIR}")
-        print("1. Gestionar LLM (Ollama + DeepSeek)")
-        print("2. Gestionar App (AnythingLLM)")
-        print("3. Gestionar TODO")
-        print("4. Utilidades Docker (Prune)")
+        print_header("Coordinador AnythingLLM")
+        print("1. Gestionar Stack LLM (Ollama/DeepSeek)")
+        print("2. Gestionar Stack App (AnythingLLM)")
+        print("3. Gestión Global (Todo)")
         print("0. Salir")
 
         choice = input("\nSeleccione una opción: ")
 
         if choice == '1':
-            manage_stack("LLM Stack", COMPOSE_LLM)
+            manage_stack("LLM", COMPOSE_LLM)
         elif choice == '2':
-            manage_stack("App Stack", COMPOSE_APP)
+            manage_stack("App", COMPOSE_APP)
         elif choice == '3':
             manage_all()
-        elif choice == '4':
-            confirm = input("¿Está seguro de ejecutar docker system prune? (s/n): ")
-            if confirm.lower() == 's':
-                run_command("docker system prune -f")
         elif choice == '0':
-            print_success("¡Hasta luego!")
-            sys.exit(0)
+            sys.exit()
         else:
             print("Opción no válida.")
-            time.sleep(1)
 
 if __name__ == "__main__":
     try:
-        main()
+        menu()
     except KeyboardInterrupt:
-        print(f"\n{Colors.WARNING}Programa interrumpido.{Colors.ENDC}")
-        sys.exit(0)
+        print("\nSaliendo...")
+        sys.exit()
