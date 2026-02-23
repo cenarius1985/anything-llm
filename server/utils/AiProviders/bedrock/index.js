@@ -72,6 +72,7 @@ class AWSBedrockLLM {
         throw new Error(`Required environment variable ${envVar} is not set.`);
     }
 
+    this.className = "AWSBedrockLLM";
     this.model =
       modelPreference || process.env.AWS_BEDROCK_LLM_MODEL_PREFERENCE;
 
@@ -146,10 +147,13 @@ class AWSBedrockLLM {
   }
 
   /**
-   * Indicates if the provider supports streaming responses.
-   * @returns {boolean} True.
+   * Some Bedrock models (Titan, Cohere) don't support streaming.
+   * Set AWS_BEDROCK_STREAMING_DISABLED to any value to disable streaming for those models.
+   * Since this can be any model even custom models we leave it to the user to disable streaming if needed.
+   * @returns {boolean} True if streaming is supported, false otherwise.
    */
   streamingEnabled() {
+    if (!!process.env.AWS_BEDROCK_STREAMING_DISABLED) return false;
     return "streamGetChatCompletion" in this;
   }
 
@@ -445,6 +449,7 @@ class AWSBedrockLLM {
         outputTps: outputTps,
         duration: result.duration,
         model: this.model,
+        provider: this.className,
         timestamp: new Date(),
       },
     };
@@ -490,6 +495,7 @@ class AWSBedrockLLM {
         messages,
         runPromptTokenCalculation: false,
         modelTag: this.model,
+        provider: this.className,
       });
       return measuredStreamRequest;
     } catch (e) {

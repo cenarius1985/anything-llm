@@ -217,6 +217,22 @@ class AgentHandler {
         if (!process.env.COHERE_API_KEY)
           throw new Error("Cohere API key must be provided to use agents.");
         break;
+      case "docker-model-runner":
+        if (!process.env.DOCKER_MODEL_RUNNER_BASE_PATH)
+          throw new Error(
+            "Docker Model Runner base path must be provided to use agents."
+          );
+        break;
+      case "privatemode":
+        if (!process.env.PRIVATEMODE_LLM_BASE_PATH)
+          throw new Error(
+            "Privatemode base path must be provided to use agents."
+          );
+        break;
+      case "sambanova":
+        if (!process.env.SAMBANOVA_LLM_API_KEY)
+          throw new Error("SambaNova API key must be provided to use agents.");
+        break;
       default:
         throw new Error(
           "No workspace agent provider set. Please set your agent provider in the workspace's settings"
@@ -237,7 +253,7 @@ class AgentHandler {
       case "anthropic":
         return process.env.ANTHROPIC_MODEL_PREF ?? "claude-3-sonnet-20240229";
       case "lmstudio":
-        return process.env.LMSTUDIO_MODEL_PREF ?? "server-default";
+        return process.env.LMSTUDIO_MODEL_PREF ?? null;
       case "ollama":
         return process.env.OLLAMA_MODEL_PREF ?? "llama3:latest";
       case "groq":
@@ -297,6 +313,12 @@ class AgentHandler {
         return process.env.GITEE_AI_MODEL_PREF ?? null;
       case "cohere":
         return process.env.COHERE_MODEL_PREF ?? "command-r-08-2024";
+      case "docker-model-runner":
+        return process.env.DOCKER_MODEL_RUNNER_LLM_MODEL_PREF ?? null;
+      case "privatemode":
+        return process.env.PRIVATEMODE_LLM_MODEL_PREF ?? null;
+      case "sambanova":
+        return process.env.SAMBANOVA_LLM_MODEL_PREF ?? null;
       default:
         return null;
     }

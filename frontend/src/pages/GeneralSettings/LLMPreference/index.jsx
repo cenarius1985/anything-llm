@@ -37,6 +37,9 @@ import MoonshotAiLogo from "@/media/llmprovider/moonshotai.png";
 import CometApiLogo from "@/media/llmprovider/cometapi.png";
 import FoundryLogo from "@/media/llmprovider/foundry-local.png";
 import GiteeAILogo from "@/media/llmprovider/giteeai.png";
+import DockerModelRunnerLogo from "@/media/llmprovider/docker-model-runner.png";
+import PrivateModeLogo from "@/media/llmprovider/privatemode.png";
+import SambaNovaLogo from "@/media/llmprovider/sambanova.png";
 
 import PreLoader from "@/components/Preloader";
 import OpenAiOptions from "@/components/LLMSelection/OpenAiOptions";
@@ -71,6 +74,9 @@ import DellProAiStudioOptions from "@/components/LLMSelection/DPAISOptions";
 import MoonshotAiOptions from "@/components/LLMSelection/MoonshotAiOptions";
 import FoundryOptions from "@/components/LLMSelection/FoundryOptions";
 import GiteeAIOptions from "@/components/LLMSelection/GiteeAIOptions/index.jsx";
+import DockerModelRunnerOptions from "@/components/LLMSelection/DockerModelRunnerOptions";
+import PrivateModeOptions from "@/components/LLMSelection/PrivateModeOptions";
+import SambaNovaOptions from "@/components/LLMSelection/SambaNovaOptions";
 
 import LLMItem from "@/components/LLMSelection/LLMItem";
 import { CaretUpDown, MagnifyingGlass, X } from "@phosphor-icons/react";
@@ -162,6 +168,26 @@ export const AVAILABLE_LLM_PROVIDERS = [
     requiredConfig: ["LMStudioBasePath"],
   },
   {
+    name: "Docker Model Runner",
+    value: "docker-model-runner",
+    logo: DockerModelRunnerLogo,
+    options: (settings) => <DockerModelRunnerOptions settings={settings} />,
+    description: "Run LLMs using Docker Model Runner.",
+    requiredConfig: [
+      "DockerModelRunnerBasePath",
+      "DockerModelRunnerModelPref",
+      "DockerModelRunnerModelTokenLimit",
+    ],
+  },
+  {
+    name: "SambaNova",
+    value: "sambanova",
+    logo: SambaNovaLogo,
+    options: (settings) => <SambaNovaOptions settings={settings} />,
+    description: "Run open source models from SambaNova.",
+    requiredConfig: ["SambaNovaLLMApiKey"],
+  },
+  {
     name: "Local AI",
     value: "localai",
     logo: LocalAiLogo,
@@ -177,6 +203,7 @@ export const AVAILABLE_LLM_PROVIDERS = [
     description: "Run open source models from Together AI.",
     requiredConfig: ["TogetherAiApiKey"],
   },
+
   {
     name: "Fireworks AI",
     value: "fireworksai",
@@ -303,6 +330,14 @@ export const AVAILABLE_LLM_PROVIDERS = [
     requiredConfig: ["MoonshotAiApiKey"],
   },
   {
+    name: "Privatemode",
+    value: "privatemode",
+    logo: PrivateModeLogo,
+    options: (settings) => <PrivateModeOptions settings={settings} />,
+    description: "Run LLMs with end-to-end encryption.",
+    requiredConfig: ["PrivateModeBasePath"],
+  },
+  {
     name: "Novita AI",
     value: "novita",
     logo: NovitaLogo,
@@ -371,6 +406,7 @@ export const AVAILABLE_LLM_PROVIDERS = [
   },
 ];
 
+export const LLM_PREFERENCE_CHANGED_EVENT = "llm-preference-changed";
 export default function GeneralLLMPreference() {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -426,6 +462,21 @@ export default function GeneralLLMPreference() {
       setLoading(false);
     }
     fetchKeys();
+  }, []);
+
+  // Some more complex LLM options do not bubble up the change event, so we need to listen to the custom event
+  // we can emit from the LLM options component using window.dispatchEvent(new Event(LLM_PREFERENCE_CHANGED_EVENT));
+  useEffect(() => {
+    function updateHasChanges() {
+      setHasChanges(true);
+    }
+    window.addEventListener(LLM_PREFERENCE_CHANGED_EVENT, updateHasChanges);
+    return () => {
+      window.removeEventListener(
+        LLM_PREFERENCE_CHANGED_EVENT,
+        updateHasChanges
+      );
+    };
   }, []);
 
   useEffect(() => {

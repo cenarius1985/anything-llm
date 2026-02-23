@@ -37,6 +37,9 @@ const ENABLED_PROVIDERS = [
   "zai",
   "giteeai",
   "cohere",
+  "docker-model-runner",
+  "privatemode",
+  "sambanova",
   // TODO: More agent support.
   // "huggingface"     // Can be done but already has issues with no-chat templated. Needs to be tested.
 ];
@@ -46,6 +49,7 @@ const WARN_PERFORMANCE = [
   "ollama",
   "localai",
   "textgenwebui",
+  "docker-model-runner",
 ];
 
 const LLM_DEFAULT = {
