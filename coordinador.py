@@ -9,6 +9,8 @@ LLM_DIR = os.path.join(DOCKER_DIR, 'llm')
 
 # Archivos docker-compose
 COMPOSE_APP = os.path.join(DOCKER_DIR, 'docker-compose.yml')
+
+# La ruta a LLM es opcional ya que el usuario puede no usarla
 COMPOSE_LLM = os.path.join(LLM_DIR, 'docker-compose.yml')
 
 def print_header(text):
@@ -77,44 +79,114 @@ def manage_all():
         print("4. Reiniciar Todo")
         print("5. Bajar Todo (Down)")
         print("6. Ver Estado Global")
+        print("7. Actualización Automática Completa (Git + Docker)")
         print("0. Volver al menú principal")
 
         choice = input("\nSeleccione una opción global: ")
 
         if choice == '1':
             print("Levantando LLM...")
-            run_command(f"{cmd_llm} up -d")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} up -d")
+            else:
+                print("No se encontró docker-compose de LLM, saltando...")
             print("Levantando App...")
             run_command(f"{cmd_app} up -d")
         elif choice == '2':
             print("Reconstruyendo LLM...")
-            run_command(f"{cmd_llm} up -d --build")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} up -d --build")
+            else:
+                print("No se encontró docker-compose de LLM, saltando...")
             print("Reconstruyendo App...")
             run_command(f"{cmd_app} up -d --build")
         elif choice == '3':
             print("Actualizando LLM...")
-            run_command(f"{cmd_llm} pull")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} pull")
+            else:
+                print("No se encontró docker-compose de LLM, saltando...")
             print("Actualizando App...")
             run_command(f"{cmd_app} pull")
         elif choice == '4':
             print("Reiniciando LLM...")
-            run_command(f"{cmd_llm} restart")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} restart")
+            else:
+                print("No se encontró docker-compose de LLM, saltando...")
             print("Reiniciando App...")
             run_command(f"{cmd_app} restart")
         elif choice == '5':
             print("Bajando App...")
             run_command(f"{cmd_app} down")
             print("Bajando LLM...")
-            run_command(f"{cmd_llm} down")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} down")
+            else:
+                print("No se encontró docker-compose de LLM, saltando...")
         elif choice == '6':
             print("Estado LLM:")
-            run_command(f"{cmd_llm} ps")
+            if os.path.exists(COMPOSE_LLM):
+                run_command(f"{cmd_llm} ps")
+            else:
+                print("No se encontró docker-compose de LLM.")
             print("\nEstado App:")
             run_command(f"{cmd_app} ps")
+        elif choice == '7':
+            auto_update_full()
         elif choice == '0':
             break
         else:
             print("Opción inválida.")
+
+def auto_update_full():
+    print_header("Actualización Automática Completa")
+    print("Esta acción realizará los siguientes pasos:")
+    print("1. Git: Checkout master")
+    print("2. Git: Pull upstream master (Actualizar código fuente oficial)")
+    print("3. Git: Checkout anything-lm-studio (Tu rama)")
+    print("4. Git: Merge master (Fusionar cambios)")
+    print("5. Docker: Down (Bajar contenedores)")
+    print("6. Docker: Up -d --build (Reconstruir y levantar)")
+    
+    confirm = input("\n¿Desea continuar? (s/n): ")
+    if confirm.lower() != 's':
+        print("Operación cancelada.")
+        return
+
+    try:
+        # Git Operations
+        print("\n[GIT] Cambiando a master...")
+        run_command("git checkout master")
+        
+        print("\n[GIT] Actualizando master desde upstream...")
+        # Intentar upstream primero, si falla probar origin
+        try:
+            run_command("git pull upstream master")
+        except:
+            print("Falló upstream, intentando origin...")
+            run_command("git pull origin master")
+            
+        print("\n[GIT] Cambiando a rama anything-lm-studio...")
+        run_command("git checkout anything-lm-studio")
+        
+        print("\n[GIT] Fusionando cambios de master...")
+        run_command("git merge master")
+        
+        # Docker Operations
+        cmd_app = get_compose_cmd(COMPOSE_APP)
+        
+        print("\n[DOCKER] Bajando contenedores...")
+        run_command(f"{cmd_app} down")
+        
+        print("\n[DOCKER] Reconstruyendo y levantando contenedores...")
+        run_command(f"{cmd_app} up -d --build")
+        
+        print("\n¡Actualización completada exitosamente!")
+        
+    except Exception as e:
+        print(f"\n[ERROR] Ocurrió un error durante la actualización: {e}")
+        print("Se recomienda revisar el estado manualmente.")
 
 def menu():
     while True:
