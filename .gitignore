@@ -10,3 +10,22 @@ aws_cf_deploy_anything_llm.json
 yarn.lock
 *.bak
 .idea
+
+docker/llm/ollama/models/
+docker/import_data/
+
+docker/llm/ollama/id_ed25519
+docker/llm/ollama/id_ed25519.pub
+server/storage/
+*.gguf
+*.bin
+*.tar
+*.zip
+*.7z
+*.iso
+
+# Ignore Ollama models and blobs (large files)
+docker/llm/ollama/models/blobs/
+docker/llm/ollama/models/manifests/
+# Ignore import data
+docker/import_data/
